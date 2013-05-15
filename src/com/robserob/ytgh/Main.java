@@ -249,19 +249,31 @@ public class Main {
 			    public Response onCompleted(Response response) throws Exception{
 			    	System.out.println("Page " + currentPage + " downloaded!");
 			    	String body = response.getResponseBody();
+			    	System.out.println("Got body");
 			    	byte[] b = body.getBytes("ISO-8859-1");
 			    	body = new String(b, "UTF-8");
+			    	System.out.println("Parsing body");
 			    	Document doc = Jsoup.parse(body);
+			    	System.out.println("Body parsed with Jsoup");
 			    	Elements comments = doc.select(".comment:not(.removed)");
+			    	System.out.println("Got all elements");
 			    	for (Element comment : comments) {
+			    		int messageID = contestantBag.getNumberOfContestants()+1;
+			    		System.out.println("Getting comment no "+ messageID);
 			    		Element userElement = comment.select(".author a").get(0);
 			    		String profileURL = userElement.attr("href");
 			    		String username = userElement.html();
-			    		int messageID = contestantBag.getNumberOfContestants()+1;
-			    		Element messageElement = comment.select(".comment-text p").get(0);
+			    		// Avoid problems with a wierd comment format glitch where there sometimes are no p element inside the .comment-text div.
+			    		Element messageElement;
+			    		if (comment.select(".comment-text p").isEmpty()) {
+			    			messageElement = comment.select(".comment-text").get(0);
+			    		} else {
+			    			messageElement = comment.select(".comment-text p").get(0);
+			    		}
 			    		String message = messageElement.html();
 			    		Contestant contestant = new Contestant(username, message, messageID, profileURL);
 			    		contestantBag.addContestant(contestant);
+			    		System.out.println("Added to bag");
 			    	}
 			    	progress.setText("<html><body>Downloading... "+contestantBag.getNumberOfContestants()+" added to the bag</body></html>");
 			    	if (currentPage < numberOfPages) {
@@ -279,6 +291,8 @@ public class Main {
 			    @Override
 			    public void onThrowable(Throwable t){
 			    	System.out.println("An error occured oh shit!");
+			    	System.out.println(t.toString());
+			    	t.printStackTrace();
 			    	System.out.println("Just trying again...");
 			    	downloadNextPage(numberOfPages, currentPage);
 			        // Something wrong happened.
