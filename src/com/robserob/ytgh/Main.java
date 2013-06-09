@@ -32,10 +32,7 @@ import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Response;
 import javax.swing.JTextArea;
 import javax.swing.JProgressBar;
-import javax.swing.DropMode;
 import java.awt.BorderLayout;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -46,6 +43,7 @@ public class Main {
 	private JPanel animationFrame;
 	private JButton goButton;
 	private JCheckBox shouldSkipAnimation;
+	private JCheckBox subscribeNeeded;
 	private JLabel progress;
 	private JProgressBar progressBar;
 	private Timer timer;
@@ -55,6 +53,7 @@ public class Main {
 	int numberOfComments = 0;
 	private JLabel lblAuthor;
 	private JLabel lblHttprobserobdk;
+	private JTextField channelURL;
 
 	/**
 	 * Launch the application.
@@ -85,7 +84,7 @@ public class Main {
 	private void initialize() {
 		frmYoutubeGiveawayHelper = new JFrame();
 		frmYoutubeGiveawayHelper.setTitle("Youtube Giveaway Helper 2.0");
-		frmYoutubeGiveawayHelper.setBounds(100, 100, 550, 372);
+		frmYoutubeGiveawayHelper.setBounds(100, 100, 550, 425);
 		frmYoutubeGiveawayHelper.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmYoutubeGiveawayHelper.getContentPane().setLayout(null);
 		
@@ -93,18 +92,15 @@ public class Main {
 		youtubeURL.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyTyped(KeyEvent arg0) {
-				if (youtubeURL.getText().indexOf("?v=") > 0 || youtubeURL.getText().length() == 11)
-					goButton.setEnabled(true);
-				else
-					goButton.setEnabled(false);
+				goButtonUpdate();
 			}
 		});
-		youtubeURL.setBounds(123, 11, 301, 29);
+		youtubeURL.setBounds(133, 11, 291, 29);
 		frmYoutubeGiveawayHelper.getContentPane().add(youtubeURL);
 		youtubeURL.setColumns(10);
 		
 		JLabel lblNewLabel = new JLabel("Youtube ID/URL:");
-		lblNewLabel.setBounds(10, 15, 93, 21);
+		lblNewLabel.setBounds(10, 15, 113, 21);
 		frmYoutubeGiveawayHelper.getContentPane().add(lblNewLabel);
 		
 		final JCheckBox noDoubleComments = new JCheckBox("No double comments");
@@ -113,11 +109,11 @@ public class Main {
 				contestantBag.setFilterDoubleComments(noDoubleComments.isSelected());
 			}
 		});
-		noDoubleComments.setBounds(275, 47, 149, 23);
+		noDoubleComments.setBounds(260, 86, 149, 23);
 		frmYoutubeGiveawayHelper.getContentPane().add(noDoubleComments);
 		
 		animationFrame = new JPanel();
-		animationFrame.setBounds(10, 77, 514, 230);
+		animationFrame.setBounds(10, 120, 514, 230);
 		frmYoutubeGiveawayHelper.getContentPane().add(animationFrame);
 		
 		goButton = new JButton("Go!");
@@ -182,20 +178,74 @@ public class Main {
 				results.getContentPane().add(sp, BorderLayout.CENTER);
 			}
 		});
-		btnVisLog.setBounds(10, 47, 132, 23);
+		btnVisLog.setBounds(10, 86, 132, 23);
 		frmYoutubeGiveawayHelper.getContentPane().add(btnVisLog);
 		
 		lblAuthor = new JLabel("Author");
-		lblAuthor.setBounds(10, 311, 46, 14);
+		lblAuthor.setBounds(10, 361, 46, 14);
 		frmYoutubeGiveawayHelper.getContentPane().add(lblAuthor);
 		
 		lblHttprobserobdk = new JLabel("http://robserob.dk");
-		lblHttprobserobdk.setBounds(415, 311, 109, 14);
+		lblHttprobserobdk.setBounds(415, 361, 109, 14);
 		frmYoutubeGiveawayHelper.getContentPane().add(lblHttprobserobdk);
 		
 		shouldSkipAnimation = new JCheckBox("Skip animation");
-		shouldSkipAnimation.setBounds(158, 47, 115, 23);
+		shouldSkipAnimation.setBounds(148, 86, 115, 23);
 		frmYoutubeGiveawayHelper.getContentPane().add(shouldSkipAnimation);
+		
+		subscribeNeeded = new JCheckBox("Only subscribers");
+		subscribeNeeded.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				goButtonUpdate();
+			}
+		});
+		subscribeNeeded.setBounds(405, 86, 123, 23);
+		frmYoutubeGiveawayHelper.getContentPane().add(subscribeNeeded);
+		
+		JLabel lblYourChannelUrl = new JLabel("Your channel URL");
+		lblYourChannelUrl.setBounds(10, 54, 113, 21);
+		frmYoutubeGiveawayHelper.getContentPane().add(lblYourChannelUrl);
+		
+		channelURL = new JTextField();
+		channelURL.setColumns(10);
+		channelURL.setBounds(133, 51, 291, 29);
+		channelURL.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				goButtonUpdate();
+			}
+		});
+		frmYoutubeGiveawayHelper.getContentPane().add(channelURL);
+	}
+	
+	private void goButtonUpdate() {
+		if (subscribeNeeded.isSelected()) {
+			if (getYoutubeID().length() > 0 && getChannelURL().length() > 0)				
+				goButton.setEnabled(true);
+			else
+				goButton.setEnabled(false);
+		} else {
+			if (getYoutubeID().length() > 0)
+				goButton.setEnabled(true);
+			else
+				goButton.setEnabled(false);
+		}
+	}
+	
+	private String getChannelURL() {
+		String url = channelURL.getText();
+		if (url.indexOf("com/") > 0) {
+			int start = url.indexOf("com/") + 4;
+			int end = url.length();
+			if (url.indexOf("?") > 0) {
+				end = url.indexOf("?");
+			}
+			String str = url.substring(start, end);
+			String[] split = str.split("/");
+			System.out.println("/" + split[0] + "/" + split[1]);
+			return "/" + split[0] + "/" + split[1];
+		}
+		return "";
 	}
 	
 	private String getYoutubeID() {
@@ -314,9 +364,15 @@ public class Main {
 	        	if (shouldSkipAnimation.isSelected()) {
 	        		goButton.setEnabled(true);
 	        		Contestant randomContestant = contestantBag.getRandomContestant();
-	        		progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
-	        		progress.setText("<html><body>Congratulations "+randomContestant.username+"!<br>Profile URL: "+randomContestant.profileURL+")<br>You won with the message number "+randomContestant.messageID+":<br>"+randomContestant.message+"</body></html>");
-	        		winnerLog = winnerLog+ randomContestant.username+"\n"+randomContestant.profileURL+"\n\n";
+	        		if (subscribeNeeded.isSelected()) {
+	        			progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+	        			progress.setText("<html><body>Drew out "+randomContestant.username+"!<br>Checking subscription status</body></html>");
+	        			checkWinner(randomContestant);
+	        		} else {
+	        			progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+	        			progress.setText("<html><body>Congratulations "+randomContestant.username+"!<br>Profile URL: "+randomContestant.profileURL+")<br>You won with the message number "+randomContestant.messageID+":<br>"+randomContestant.message+"</body></html>");
+	        			winnerLog = winnerLog+ randomContestant.username+"\n"+randomContestant.profileURL+"\n\n";
+	        		}
 	        		timer.stop();
 	    		} else {
 		        	if (fase == 0) {
@@ -369,9 +425,15 @@ public class Main {
 		        	if (fase == 6) {	        		
 		        		goButton.setEnabled(true);
 		        		Contestant randomContestant = contestantBag.getRandomContestant();
-		        		progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
-		        		progress.setText("<html><body>Congratulations "+randomContestant.username+"!<br>Profile URL: "+randomContestant.profileURL+")<br>You won with the message number "+randomContestant.messageID+":<br>"+randomContestant.message+"</body></html>");
-		        		winnerLog = winnerLog+ randomContestant.username+"\n"+randomContestant.profileURL+"\n\n";
+		        		if (subscribeNeeded.isSelected()) {
+		        			progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		        			progress.setText("<html><body>Drew out "+randomContestant.username+"!<br>Checking subscription status</body></html>");
+		        			checkWinner(randomContestant);
+		        		} else {
+		        			progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		        			progress.setText("<html><body>Congratulations "+randomContestant.username+"!<br>Profile URL: "+randomContestant.profileURL+")<br>You won with the message number "+randomContestant.messageID+":<br>"+randomContestant.message+"</body></html>");
+		        			winnerLog = winnerLog+ randomContestant.username+"\n"+randomContestant.profileURL+"\n\n";
+		        		}
 		        	} else {
 		        		Contestant randomContestant = contestantBag.getRandomContestant();
 	        			progress.setText("<html><body>"+randomContestant.username+"</body></html>");
@@ -383,5 +445,73 @@ public class Main {
         timer.setRepeats(true);
         timer.setInitialDelay(2500);
         timer.start();
+	}
+	
+	private void checkWinner(final Contestant contestant) {
+		progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		progress.setText("<html><body>Drew out "+contestant.username+"!<br>Checking subscription status</body></html>");	
+		System.out.println("Checking youtube user: https://www.youtube.com"+contestant.profileURL+"/about");
+		try {
+			asyncHttpClient.prepareGet("https://www.youtube.com"+contestant.profileURL+"/about").execute(new AsyncCompletionHandler<Response>(){
+
+			    @Override
+			    public Response onCompleted(Response response) throws Exception{
+			    	System.out.println("Page downloaded!");
+			    	String body = response.getResponseBody();
+			    	System.out.println("Got body");
+			    	byte[] b = body.getBytes("ISO-8859-1");
+			    	body = new String(b, "UTF-8");
+			    	System.out.println("Parsing body");
+			    	Document doc = Jsoup.parse(body);
+			    	System.out.println("Body parsed with Jsoup");
+			    	Elements comments = doc.select(".about-subscriptions");
+			    	if (comments.size() == 0) {
+			    		progress.setText("<html><body>Subscription data was hidden...</body></html>");
+			    		Object[] options = {"Allow user to win",
+	                    "No find new winner"};
+			    		int n = JOptionPane.showOptionDialog(frmYoutubeGiveawayHelper,
+			    			contestant.username + " has his/her subscriptions hidden. Should the user be allowed to win?",
+			    			"Subscriptions hidden",
+							JOptionPane.YES_NO_OPTION,
+							JOptionPane.QUESTION_MESSAGE,
+							null,     //do not use a custom Icon
+							options,  //the titles of buttons
+							options[0]); //default button title
+						if (n == JOptionPane.YES_OPTION) {
+							progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		        			progress.setText("<html><body>Congratulations "+contestant.username+"!<br>Profile URL: "+contestant.profileURL+")<br>You won with the message number "+contestant.messageID+":<br>"+contestant.message+"</body></html>");
+		        			winnerLog = winnerLog+ contestant.username+"\n"+contestant.profileURL+"\n\n";
+						} else {
+							checkWinner(contestantBag.getRandomContestant());
+						}
+			    	} else {
+			    		// Searches for the channel in either the subscriptions or the recommendation box.
+			    		Elements channelSearch = doc.select(".channel-summary-list-item a[href="+getChannelURL()+"]");
+			    		if (channelSearch.size() == 0) {
+			    			// Not a subscriber.. Find a new contestant.
+			    			checkWinner(contestantBag.getRandomContestant());
+			    		} else {
+			    			progress.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		        			progress.setText("<html><body>Congratulations "+contestant.username+"!<br>Profile URL: "+contestant.profileURL+")<br>You won with the message number "+contestant.messageID+":<br>"+contestant.message+"</body></html>");
+		        			winnerLog = winnerLog+ contestant.username+"\n"+contestant.profileURL+"\n\n";
+			    		}
+			    	}
+			    	return response;
+			    }
+
+			    @Override
+			    public void onThrowable(Throwable t){
+			    	System.out.println("An error occured oh shit!");
+			    	System.out.println(t.toString());
+			    	t.printStackTrace();
+			    	System.out.println("Just trying again...");
+			    	checkWinner(contestant);
+			        // Something wrong happened.
+			    }
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
