@@ -21,9 +21,11 @@ public class ContestantBag {
 	public int getNumberOfContestants() {
 		return this.contestants.size();
 	}
+	// Simply clears the bag.
 	public void emptyBag() {
 		contestants.clear();
 	}	
+	// Checks if there is an Contestant with the same URL already in the bag. 
 	public Boolean checkIfContestantIsInBag(Contestant contestant) {
 		for (Contestant current : contestants) {
 			if (current.profileURL.equals(contestant.profileURL)) {
@@ -33,6 +35,7 @@ public class ContestantBag {
 		}
 		return false;
 	}
+	// Adds the Contestant to the bag.
 	public Boolean addContestant(Contestant contestant) {
 		if (filterDoubleComments) {
 			if (checkIfContestantIsInBag(contestant)) return false;
@@ -40,7 +43,7 @@ public class ContestantBag {
 		this.contestants.add(contestant);		
 		return true;
 	}
-	
+	// Gets a random Contestant from the bag.
 	public Contestant getRandomContestant() {
 		int indexToGet = randomGenerator.nextInt(contestants.size());
 		return contestants.get(indexToGet);

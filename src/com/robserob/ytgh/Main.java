@@ -18,7 +18,6 @@ import java.awt.event.ActionEvent;
 import java.awt.Font;
 import java.io.IOException;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
@@ -39,7 +38,7 @@ import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class Main {
+public class Main implements CommentDownloaderCallback {
 
 	private JFrame frmYoutubeGiveawayHelper;
 	private JTextField youtubeURL;
@@ -48,15 +47,16 @@ public class Main {
 	private JCheckBox shouldSkipAnimation;
 	private JCheckBox subscribeNeeded;
 	private JLabel progress;
-	private JProgressBar progressBar;
+	public JProgressBar progressBar;
 	private Timer timer;
 	private String winnerLog = "";
 	private ContestantBag contestantBag = new ContestantBag();
-	AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
+	private CommentDownloader commentDownloader;
 	int numberOfComments = 0;
 	private JLabel lblAuthor;
 	private JLabel lblHttprobserobdk;
 	private JTextField channelURL;
+	private AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
 
 	/**
 	 * Launch the application.
@@ -85,6 +85,8 @@ public class Main {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		commentDownloader = new CommentDownloader(this);
+		
 		frmYoutubeGiveawayHelper = new JFrame();
 		frmYoutubeGiveawayHelper.setTitle("Youtube Giveaway Helper 2.0");
 		frmYoutubeGiveawayHelper.setBounds(100, 100, 550, 425);
@@ -262,104 +264,23 @@ public class Main {
 		return "";
 	}
 	
-	private void Go() {		
-		progress.setText("Getting the total number of comments.");
-		goButton.setEnabled(false);
-		/*
-	    try {
-			Response response = asyncHttpClient.prepareGet("http://gdata.youtube.com/feeds/api/videos/"+getYoutubeID()+"/comments").execute().get();
-			String body = response.getResponseBody();
-	    	int startIndex = body.indexOf("<openSearch:totalResults>") + "<openSearch:totalResults>".length();
-	    	int endIndex = body.indexOf("</openSearch:totalResults>");
-	    	numberOfComments = Integer.parseInt(body.substring(startIndex, endIndex));
-	    	progress.setText("<html><body>There are " + numberOfComments + " comments!<br>Downloading them now....</body></html>");
-	    	StartDownload();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
-		StartDownload();
+	public void updateProgress(final int percent, final String state) {
+		progressBar.setValue(percent);
+		progress.setText(state);
 	}
 	
-	private void StartDownload() {
+	private void Go() {		
+		updateProgress(0, "Getting the total number of comments.");
+		goButton.setEnabled(false);
 		progressBar.setValue(0);
 		progressBar.setVisible(true);
 		
-		int currentPage = 1;
-		downloadNextPage("", currentPage);
+		commentDownloader.beginDownload(getYoutubeID(), contestantBag);
 	}
 	
-	private void downloadNextPage(final String pagetoken, final int currentPage) {
-		System.out.println("Downloading page number " + currentPage);
-		try {
-			String url = "http://gdata.youtube.com/feeds/api/videos/"+getYoutubeID()+"/comments?prettyprint=true&orderby=published&max-results=25&orderby=published";
-			if (!pagetoken.isEmpty()) {
-				url = url +"&start-token="+pagetoken;
-			}
-			System.out.println("Using URL: "+ url);
-			asyncHttpClient.prepareGet(url).execute(new AsyncCompletionHandler<Response>(){
-
-			    @Override
-			    public Response onCompleted(Response response) throws Exception{
-			    	System.out.println("Page " + currentPage + " downloaded!");
-			    	String body = response.getResponseBody();
-			    	byte[] b = body.getBytes("ISO-8859-1");
-			    	body = new String(b, "UTF-8");
-			    	Document doc = Jsoup.parse(body);
-			    	Elements comments = doc.select("entry");
-			    	for (Element comment : comments) {
-			    		int messageID = contestantBag.getNumberOfContestants()+1;
-			    		System.out.println("Getting comment no "+ messageID);
-			    		Element userElement = comment.select("author").get(0);
-			    		String profileURL = userElement.select("uri").get(0).html();
-			    		String username = userElement.select("name").get(0).html();
-			    		// Avoid problems with a wierd comment format glitch where there sometimes are no p element inside the .comment-text div.
-			    		Element messageElement = comment.select("content").get(0);
-			    		String message = messageElement.html();
-			    		Contestant contestant = new Contestant(username, message, messageID, profileURL);
-			    		contestantBag.addContestant(contestant);
-			    		//System.out.println("Added to bag");
-			    	}
-			    	progress.setText("<html><body>Downloading... "+contestantBag.getNumberOfContestants()+" added to the bag</body></html>");
-			    	int hasNext = body.indexOf("<link rel='next' type='application/atom+xml'"); 
-			    	if (hasNext > -1) {
-			    		Element nextUrl = doc.select("link[rel=next]").get(0);
-			    		System.out.println(nextUrl.html());
-			    		int startIndex = body.indexOf("comments?orderby=published&amp;start-token=");
-			    		startIndex += "comments?orderby=published&amp;start-token=".length();
-				    	int endIndex = body.indexOf("&amp;max-results=25&amp;orderby=published'/>", startIndex);
-				    	System.out.println("Start: " + startIndex + " End: " + endIndex);
-			    		System.out.println("Getting next page with pagetoken "+ body.substring(startIndex, endIndex));
-			    		downloadNextPage(body.substring(startIndex, endIndex), currentPage+1);
-			    	}
-			    	else { 
-			    		findWinner();
-			    		progressBar.setVisible(false);
-			    	}
-			        return response;
-			    }
-
-			    @Override
-			    public void onThrowable(Throwable t){
-			    	System.out.println("An error occured oh shit!");
-			    	System.out.println(t.toString());
-			    	t.printStackTrace();
-			    	System.out.println("Just trying again...");
-			    	downloadNextPage(pagetoken, currentPage);
-			        // Something wrong happened.
-			    }
-			});
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void downloadFinished() {
+		progressBar.setVisible(false);
+		findWinner();
 	}
 	
 	private void findWinner() {
