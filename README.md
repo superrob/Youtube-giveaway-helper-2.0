@@ -1,8 +1,8 @@
 Youtube giveaway helper 2.0
 ===========================
 
-This is a brand new version of my old utility for finding random winners of youtube giveaways written in java for crossplatform rather than C#.
-It is more advanced and uses a different technique for extracting the data off the website.
+This tool uses the Youtube GData API to fetch comments for a given video which it then uses to draw a random winner while showing an animation.
+The tool allows the user to filter double comments and have experimental features like checking if the user is subscribed.
 
 The repo is of my eclipse directory.
 The program uses the async-http-client, jsoup, and slf4j libaries and are bundled for convenience. 
