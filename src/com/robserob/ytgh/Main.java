@@ -23,7 +23,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
@@ -225,12 +224,12 @@ public class Main implements CommentDownloaderCallback {
 	
 	private void goButtonUpdate() {
 		if (subscribeNeeded.isSelected()) {
-			if (getYoutubeID().length() > 0 && getChannelURL().length() > 0)				
+			if (getYoutubeID().length() == 11 && getChannelURL().length() > 0)				
 				goButton.setEnabled(true);
 			else
 				goButton.setEnabled(false);
 		} else {
-			if (getYoutubeID().length() > 0)
+			if (getYoutubeID().length() == 11)
 				goButton.setEnabled(true);
 			else
 				goButton.setEnabled(false);
@@ -259,7 +258,21 @@ public class Main implements CommentDownloaderCallback {
 		} else if (youtubeURL.getText().indexOf("?v=") > 0) {
 			int start = youtubeURL.getText().indexOf("?v=")+3;
 			int end = start+11;
-			return youtubeURL.getText().substring(start, end);
+			if (end <= youtubeURL.getText().length()) {
+				String url = youtubeURL.getText().substring(start, end);
+				if (url.length() == 11) // Have we gotten a valid youtube ID length?
+					return youtubeURL.getText().substring(start, end);
+			}
+			return "";
+		} else if (youtubeURL.getText().indexOf("youtu.be/") > 0) {
+			int start = youtubeURL.getText().indexOf("youtu.be/")+9;
+			int end = start+11;
+			if (end <= youtubeURL.getText().length()) {
+				String url = youtubeURL.getText().substring(start, end);
+				if (url.length() == 11) // Have we gotten a valid youtube ID length?
+					return youtubeURL.getText().substring(start, end);
+			}
+			return "";
 		}		
 		return "";
 	}
